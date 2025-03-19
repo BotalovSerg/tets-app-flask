@@ -1,8 +1,7 @@
 from flask import Flask, request, jsonify
 from datetime import datetime
 
-from .fake_db import tasks
-from .utils import validate_deadline
+from fake_db import task_manager
 
 app = Flask(__name__)
 
@@ -23,9 +22,9 @@ def get_tasks():
     return jsonify(result)
 
 
-@app.route("/tasks", methods=["POST"])
+@app.post("/tasks")
 def add_task():
-    data = request.get_json()
+    data: dict = request.get_json()
     if (
         not data
         or "title" not in data
@@ -34,24 +33,14 @@ def add_task():
     ):
         return jsonify({"error": "Missing required fields"}), 400
 
-    if not validate_deadline(data["deadline"]):
+    if not task_manager.validate_deadline(data["deadline"]):
         return jsonify({"error": "Invalid deadline format. Use DD-MM-YYYY"}), 400
 
-    try:
-        # Преобразуем дедлайн в объект datetime для удобства сортировки
-        deadline_date = datetime.strptime(data["deadline"], "%d-%m-%Y")
-    except ValueError:
-        return jsonify({"error": "Invalid date. Use DD-MM-YYYY format"}), 400
-
-    task_id = len(tasks) + 1
-    task = {
-        "id": task_id,
-        "title": data["title"],
-        "description": data["description"],
-        "deadline": data["deadline"],
-        "deadline_date": deadline_date,  # Для внутренней сортировки
-    }
-    tasks.append(task)
+    task = task_manager.add_task(
+        data.get("title"),
+        data.get("description"),
+        data.get("deadline"),
+    )
     return jsonify({"message": "Task added", "task": task}), 201
 
 

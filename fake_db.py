@@ -27,11 +27,9 @@ class TaskManager:
     # Валидация формата дедлайна (DD-MM-YYYY)
     @staticmethod
     def validate_deadline(deadline: str) -> bool:
-        return re.match(r"\d{2}-\d{2}-\d{4}", deadline) is None
+        return re.match(r"\d{2}-\d{2}-\d{4}", deadline) is not None
 
-    def add_task(self, title: str, description: str, deadline: str) -> Task | None:
-        if self.validate_deadline(deadline):
-            return None
+    def add_task(self, title: str, description: str, deadline: str) -> Task:
         task: Task = {
             "id": self.generate_unique_id(),
             "title": title,
