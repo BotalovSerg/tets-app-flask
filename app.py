@@ -1,5 +1,4 @@
 from flask import Flask, request, jsonify
-from datetime import datetime
 
 from fake_db import task_manager
 
@@ -8,16 +7,15 @@ app = Flask(__name__)
 
 @app.get("/tasks")
 def get_tasks():
-    # Сортируем задачи по дедлайну (ближайшие сверху)
-    sorted_tasks = sorted(tasks, key=lambda x: x["deadline_date"])
+    tasks = task_manager.get_tasks()
     result = [
         {
-            "id": t["id"],
-            "title": t["title"],
-            "description": t["description"],
-            "deadline": t["deadline"],
+            "id": task["_id"],
+            "title": task["title"],
+            "description": task["description"],
+            "deadline": task["deadline"],
         }
-        for t in sorted_tasks
+        for task in tasks
     ]
     return jsonify(result)
 
@@ -44,14 +42,12 @@ def add_task():
     return jsonify({"message": "Task added", "task": task}), 201
 
 
-@app.route("/tasks/<int:task_id>", methods=["DELETE"])
+@app.delete("/tasks/<int:task_id>")
 def delete_task(task_id):
-    global tasks
-    initial_length = len(tasks)
-    tasks = [task for task in tasks if task["id"] != task_id]
-    if len(tasks) == initial_length:
-        return jsonify({"error": "Task not found"}), 404
-    return jsonify({"message": "Task deleted"}), 200
+    success = task_manager.delete_task(task_id)
+    if success:
+        return jsonify({"message": "Task deleted"}), 200
+    return jsonify({"error": "Task not found"}), 404
 
 
 if __name__ == "__main__":

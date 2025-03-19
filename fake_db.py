@@ -2,10 +2,6 @@ import re
 from typing import TypedDict, List
 from datetime import datetime
 
-# Список задач в памяти. Каждая задача — словарь с уникальным ID.
-# ID генерируется как длина списка + 1 для простоты.
-# Это позволяет быстро находить, добавлять и удалять задачи.
-
 
 class Task(TypedDict):
     _id: int
@@ -24,14 +20,16 @@ class TaskManager:
         self.current_id += 1
         return self.current_id
 
-    # Валидация формата дедлайна (DD-MM-YYYY)
+    def get_tasks(self) -> List[Task]:
+        return sorted(self.tasks, key=lambda task: task.get("deadline_date"))
+
     @staticmethod
     def validate_deadline(deadline: str) -> bool:
         return re.match(r"\d{2}-\d{2}-\d{4}", deadline) is not None
 
     def add_task(self, title: str, description: str, deadline: str) -> Task:
         task: Task = {
-            "id": self.generate_unique_id(),
+            "_id": self.generate_unique_id(),
             "title": title,
             "description": description,
             "deadline": deadline,
@@ -39,6 +37,12 @@ class TaskManager:
         }
         self.tasks.append(task)
         return task
+
+    def delete_task(self, task_id: int) -> bool | None:
+        current_len = len(self.tasks)
+        if current_len:
+            self.tasks = [task for task in self.tasks if task.get("_id") != task_id]
+            return current_len != len(self.tasks)
 
 
 task_manager = TaskManager()
